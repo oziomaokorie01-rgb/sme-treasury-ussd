@@ -109,3 +109,5 @@ web3==7.15.0
 flask-cors==6.0.2
 groq==1.1.2
 web3==7.15.0
+open-wallet-standard==1.2.4
+

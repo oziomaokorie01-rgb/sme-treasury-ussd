@@ -10,9 +10,11 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  Fingerprint,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { VocalGuideToggle } from "./vocal-guide"
 
 interface SidebarProps {
   activeTab: string
@@ -24,6 +26,7 @@ const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "vault", label: "Vault Security", icon: Shield },
   { id: "ussd", label: "USSD Activity", icon: Smartphone },
+  { id: "security", label: "Security Check", icon: Fingerprint },
 ]
 
 const bottomItems = [
@@ -170,6 +173,16 @@ export function Sidebar({ activeTab, onTabChange, vaultSecure }: SidebarProps) {
           })}
         </ul>
       </nav>
+
+      {/* Vocal Guide */}
+      {!collapsed && (
+        <div className="px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">
+            Accessibility
+          </p>
+          <VocalGuideToggle />
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <div className="px-3 py-4 border-t border-border">

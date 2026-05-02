@@ -13,7 +13,13 @@ import { Footer } from "@/components/treasury/footer"
 import { LoginScreen } from "@/components/treasury/login-screen"
 import { BackupPhraseModal } from "@/components/treasury/backup-phrase-modal"
 import { AddFundsModal } from "@/components/treasury/add-funds-modal"
-import { Plus, Shield } from "lucide-react"
+import { DepositNairaModal } from "@/components/treasury/deposit-naira-modal"
+import { CashOutModal } from "@/components/treasury/cash-out-modal"
+import { CurrencyProvider } from "@/components/treasury/currency-context"
+import { CurrencyToggle } from "@/components/treasury/currency-toggle"
+import { VocalGuideProvider, VocalGuideButton } from "@/components/treasury/vocal-guide"
+import { SecurityCheck } from "@/components/treasury/security-check"
+import { Plus, Shield, Building2, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const BACKEND_URL = "https://sme-treasury-ussd.onrender.com"
@@ -88,6 +94,8 @@ export default function TreasuryDashboard() {
   const [transactions, setTransactions] = useState<USSDTransaction[]>(initialTransactions)
   const [showBackupModal, setShowBackupModal] = useState(false)
   const [showAddFundsModal, setShowAddFundsModal] = useState(false)
+  const [showDepositNairaModal, setShowDepositNairaModal] = useState(false)
+  const [showCashOutModal, setShowCashOutModal] = useState(false)
   const [hasBackedUp, setHasBackedUp] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
 
@@ -140,8 +148,8 @@ export default function TreasuryDashboard() {
           timestamp: new Date().toISOString(),
         }),
       })
-    } catch (error) {
-      console.log("[v0] Backend payment notification failed:", error)
+    } catch {
+      // Silent fail for demo
     }
   }, [])
 
@@ -174,8 +182,8 @@ export default function TreasuryDashboard() {
               timestamp: new Date().toISOString(),
             }),
           })
-        } catch (error) {
-          console.log("[v0] Backend USSD activity notification failed:", error)
+        } catch {
+          // Silent fail for demo
         }
       }
     }, 15000)
@@ -223,139 +231,202 @@ export default function TreasuryDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        vaultSecure={vaultSecure}
-      />
+    <CurrencyProvider>
+      <VocalGuideProvider>
+        <div className="flex h-screen bg-background overflow-hidden">
+          {/* Sidebar */}
+          <Sidebar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            vaultSecure={vaultSecure}
+          />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50 backdrop-blur-sm"
-        >
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {activeTab === "overview" && "Dashboard Overview"}
-              {activeTab === "vault" && "Vault Security"}
-              {activeTab === "ussd" && "USSD Activity"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {activeTab === "overview" && "Monitor your treasury operations in real-time"}
-              {activeTab === "vault" && "Manage and secure your vault assets"}
-              {activeTab === "ussd" && "Track all USSD transactions"}
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* OWS Secured Status */}
-            <motion.div 
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30"
-              animate={{
-                boxShadow: [
-                  "0 0 0 0 rgba(34, 197, 94, 0)",
-                  "0 0 12px 2px rgba(34, 197, 94, 0.3)",
-                  "0 0 0 0 rgba(34, 197, 94, 0)"
-                ]
-              }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Header */}
+            <motion.header
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50 backdrop-blur-sm"
             >
-              <motion.div 
-                className="w-2 h-2 rounded-full bg-green-500"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              <span className="text-xs font-medium text-green-500">OWS Secured</span>
-            </motion.div>
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">
+                  {activeTab === "overview" && "Dashboard Overview"}
+                  {activeTab === "vault" && "Vault Security"}
+                  {activeTab === "ussd" && "USSD Activity"}
+                  {activeTab === "security" && "Security Check"}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {activeTab === "overview" && "Monitor your treasury operations in real-time"}
+                  {activeTab === "vault" && "Manage and secure your vault assets"}
+                  {activeTab === "ussd" && "Track all USSD transactions"}
+                  {activeTab === "security" && "Verify your identity and security settings"}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Currency Toggle */}
+                <div className="flex items-center gap-2">
+                  <CurrencyToggle />
+                  <VocalGuideButton featureId="currency-toggle" />
+                </div>
 
-            {/* Add Funds Button */}
-            <Button
-              onClick={() => setShowAddFundsModal(true)}
-              className="h-9 px-4 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white rounded-lg flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Funds
-            </Button>
+                {/* OWS Secured Status */}
+                <motion.div 
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30"
+                  animate={{
+                    boxShadow: [
+                      "0 0 0 0 rgba(34, 197, 94, 0)",
+                      "0 0 12px 2px rgba(34, 197, 94, 0.3)",
+                      "0 0 0 0 rgba(34, 197, 94, 0)"
+                    ]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <motion.div 
+                    className="w-2 h-2 rounded-full bg-green-500"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                  <span className="text-xs font-medium text-green-500">OWS Secured</span>
+                </motion.div>
+
+                {/* Deposit Naira Button */}
+                <Button
+                  onClick={() => setShowDepositNairaModal(true)}
+                  variant="outline"
+                  className="h-9 px-3 rounded-lg flex items-center gap-2 border-green-500/30 text-green-500 hover:bg-green-500/10"
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Deposit ₦</span>
+                  <VocalGuideButton featureId="deposit-naira" className="ml-1" />
+                </Button>
+
+                {/* Cash Out Button */}
+                <Button
+                  onClick={() => setShowCashOutModal(true)}
+                  variant="outline"
+                  className="h-9 px-3 rounded-lg flex items-center gap-2 border-purple-500/30 text-purple-500 hover:bg-purple-500/10"
+                >
+                  <Banknote className="w-4 h-4" />
+                  <span className="hidden sm:inline">Cash Out</span>
+                  <VocalGuideButton featureId="cash-out" className="ml-1" />
+                </Button>
+
+                {/* Add Funds Button */}
+                <Button
+                  onClick={() => setShowAddFundsModal(true)}
+                  className="h-9 px-4 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white rounded-lg flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Funds</span>
+                  <VocalGuideButton featureId="add-funds" className="ml-1" />
+                </Button>
+              </div>
+            </motion.header>
+
+            {/* Content Area */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Main Panel */}
+              <main className="flex-1 overflow-y-auto p-6">
+                <AnimatePresence mode="wait">
+                  {activeTab === "overview" && (
+                    <motion.div
+                      key="overview"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-6"
+                    >
+                      <OverviewPanel />
+                      <div className="grid gap-6 lg:grid-cols-2">
+                        <VaultStatusCard isSecure={vaultSecure} />
+                        <SuppliersCard />
+                      </div>
+                      <USSDActivity transactions={transactions} />
+                    </motion.div>
+                  )}
+
+                  {activeTab === "vault" && (
+                    <motion.div
+                      key="vault"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-6"
+                    >
+                      <VaultStatusCard isSecure={vaultSecure} />
+                      <SuppliersCard />
+                    </motion.div>
+                  )}
+
+                  {activeTab === "ussd" && (
+                    <motion.div
+                      key="ussd"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <USSDActivity transactions={transactions} />
+                    </motion.div>
+                  )}
+
+                  {activeTab === "security" && (
+                    <motion.div
+                      key="security"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="py-8"
+                    >
+                      <SecurityCheck 
+                        phoneNumber={user?.phone?.number || "+234 812 345 6789"}
+                        onComplete={() => setVaultSecure(true)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </main>
+
+              {/* Chat Panel */}
+              <aside className="w-[400px] border-l border-border bg-card/30 flex flex-col">
+                <ChatInterface onPaymentAuthorized={handlePaymentAuthorized} />
+              </aside>
+            </div>
+
+            {/* Footer */}
+            <Footer />
           </div>
-        </motion.header>
 
-        {/* Content Area */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Main Panel */}
-          <main className="flex-1 overflow-y-auto p-6">
-            <AnimatePresence mode="wait">
-              {activeTab === "overview" && (
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  <OverviewPanel />
-                  <div className="grid gap-6 lg:grid-cols-2">
-                    <VaultStatusCard isSecure={vaultSecure} />
-                    <SuppliersCard />
-                  </div>
-                  <USSDActivity transactions={transactions} />
-                </motion.div>
-              )}
+          {/* Backup Phrase Modal - shows once for new users */}
+          <BackupPhraseModal
+            isOpen={showBackupModal && isNewUser && !hasBackedUp}
+            onClose={() => setShowBackupModal(false)}
+            onBackupComplete={handleBackupComplete}
+          />
 
-              {activeTab === "vault" && (
-                <motion.div
-                  key="vault"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  <VaultStatusCard isSecure={vaultSecure} />
-                  <SuppliersCard />
-                </motion.div>
-              )}
+          {/* Add Funds Modal */}
+          <AddFundsModal
+            isOpen={showAddFundsModal}
+            onClose={() => setShowAddFundsModal(false)}
+          />
 
-              {activeTab === "ussd" && (
-                <motion.div
-                  key="ussd"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <USSDActivity transactions={transactions} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </main>
+          {/* Deposit Naira Modal */}
+          <DepositNairaModal
+            isOpen={showDepositNairaModal}
+            onClose={() => setShowDepositNairaModal(false)}
+          />
 
-          {/* Chat Panel */}
-          <aside className="w-[400px] border-l border-border bg-card/30 flex flex-col">
-            <ChatInterface onPaymentAuthorized={handlePaymentAuthorized} />
-          </aside>
+          {/* Cash Out Modal */}
+          <CashOutModal
+            isOpen={showCashOutModal}
+            onClose={() => setShowCashOutModal(false)}
+          />
         </div>
-
-        {/* Footer */}
-        <Footer />
-      </div>
-
-      {/* Backup Phrase Modal - shows once for new users */}
-      <BackupPhraseModal
-        isOpen={showBackupModal && isNewUser && !hasBackedUp}
-        onClose={() => setShowBackupModal(false)}
-        onBackupComplete={handleBackupComplete}
-      />
-
-      {/* Add Funds Modal */}
-      <AddFundsModal
-        isOpen={showAddFundsModal}
-        onClose={() => setShowAddFundsModal(false)}
-      />
-    </div>
+      </VocalGuideProvider>
+    </CurrencyProvider>
   )
 }

@@ -4,6 +4,8 @@ import { motion } from "framer-motion"
 import { Shield, Copy, ExternalLink, CheckCircle2 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useCurrency } from "./currency-context"
+import { VocalGuideButton } from "./vocal-guide"
 
 interface VaultStatusCardProps {
   isSecure: boolean
@@ -11,8 +13,14 @@ interface VaultStatusCardProps {
 
 export function VaultStatusCard({ isSecure }: VaultStatusCardProps) {
   const [copied, setCopied] = useState(false)
+  const { view, exchangeRate } = useCurrency()
   const vaultAddress = "0x7f3a8b2c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a"
   const truncatedAddress = `${vaultAddress.slice(0, 6)}...${vaultAddress.slice(-4)}`
+  
+  // Balance in ETH equivalent to NGN
+  const balanceETH = 12.458
+  const balanceUSD = 24916.00
+  const balanceNGN = balanceUSD * exchangeRate // Convert USD to NGN
 
   const copyAddress = () => {
     navigator.clipboard.writeText(vaultAddress)
@@ -37,6 +45,7 @@ export function VaultStatusCard({ isSecure }: VaultStatusCardProps) {
             <Shield className="w-4 h-4 text-[#0052FF]" />
           </div>
           <h3 className="font-semibold text-foreground">Vault Status</h3>
+          <VocalGuideButton featureId="vault-status" />
         </div>
         <motion.div
           className={cn(
@@ -112,11 +121,32 @@ export function VaultStatusCard({ isSecure }: VaultStatusCardProps) {
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
           Available Balance
         </p>
-        <p className="text-2xl font-bold text-foreground">
-          12.458{" "}
-          <span className="text-sm font-normal text-muted-foreground">ETH</span>
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5">≈ $24,916.00 USD</p>
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {view === "ngn" ? (
+            <>
+              <p className="text-2xl font-bold text-foreground">
+                ₦{balanceNGN.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                ≈ {balanceETH} ETH / ${balanceUSD.toLocaleString()} USDC
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-bold text-foreground">
+                ${balanceUSD.toLocaleString()}{" "}
+                <span className="text-sm font-normal text-muted-foreground">USDC</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                ≈ {balanceETH} ETH / ₦{balanceNGN.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+            </>
+          )}
+        </motion.div>
       </div>
     </motion.div>
   )

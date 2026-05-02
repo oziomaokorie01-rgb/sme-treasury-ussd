@@ -2,8 +2,19 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { usePrivy } from "@privy-io/react-auth"
 import { Sidebar } from "@/components/treasury/sidebar"
+
+// Conditionally import Privy hook
+let usePrivy: (() => { ready: boolean; authenticated: boolean; user: { id: string; phone?: { number: string } } | null }) | undefined
+try {
+  if (process.env.NEXT_PUBLIC_PRIVY_APP_ID) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const privy = require("@privy-io/react-auth")
+    usePrivy = privy.usePrivy
+  }
+} catch {
+  // Privy not available
+}
 import { ChatInterface } from "@/components/treasury/chat-interface"
 import { VaultStatusCard } from "@/components/treasury/vault-status-card"
 import { SuppliersCard } from "@/components/treasury/suppliers-card"
@@ -88,7 +99,13 @@ const newTransactionTemplates = [
 ]
 
 export default function TreasuryDashboard() {
-  const { ready, authenticated, user } = usePrivy()
+  // Use Privy if configured, otherwise use demo mode
+  const privyHook = usePrivy?.()
+  const ready = privyHook?.ready ?? true
+  const [demoAuthenticated, setDemoAuthenticated] = useState(false)
+  const authenticated = privyHook?.authenticated ?? demoAuthenticated
+  const user = privyHook?.user ?? (demoAuthenticated ? { id: "demo-user", phone: { number: "+234 812 345 6789" } } : null)
+  
   const [activeTab, setActiveTab] = useState("overview")
   const [vaultSecure, setVaultSecure] = useState(false)
   const [transactions, setTransactions] = useState<USSDTransaction[]>(initialTransactions)
@@ -98,6 +115,11 @@ export default function TreasuryDashboard() {
   const [showCashOutModal, setShowCashOutModal] = useState(false)
   const [hasBackedUp, setHasBackedUp] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
+
+  // Handle demo login
+  const handleDemoLogin = useCallback(() => {
+    setDemoAuthenticated(true)
+  }, [])
 
   // Check if user is new and show backup modal
   useEffect(() => {
@@ -227,7 +249,7 @@ export default function TreasuryDashboard() {
 
   // Show login screen if not authenticated
   if (!authenticated) {
-    return <LoginScreen />
+    return <LoginScreen onDemoLogin={handleDemoLogin} />
   }
 
   return (

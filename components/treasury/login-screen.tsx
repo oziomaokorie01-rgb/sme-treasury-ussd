@@ -1,9 +1,21 @@
 "use client"
 
-import { useLogin } from "@privy-io/react-auth"
 import { motion } from "framer-motion"
 import { Shield, Wallet, Bot, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+// Conditionally import Privy hook
+let useLogin: (() => { login: () => void }) | undefined
+try {
+  // Only use Privy if the app ID is configured
+  if (process.env.NEXT_PUBLIC_PRIVY_APP_ID) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const privy = require("@privy-io/react-auth")
+    useLogin = privy.useLogin
+  }
+} catch {
+  // Privy not available
+}
 
 const features = [
   {
@@ -23,15 +35,14 @@ const features = [
   },
 ]
 
-export function LoginScreen() {
-  const { login } = useLogin({
-    onComplete: () => {
-      console.log("[v0] User logged in successfully")
-    },
-    onError: (error) => {
-      console.log("[v0] Login error:", error)
-    },
-  })
+interface LoginScreenProps {
+  onDemoLogin?: () => void
+}
+
+export function LoginScreen({ onDemoLogin }: LoginScreenProps) {
+  // Use Privy login if available, otherwise use demo login
+  const privyHook = useLogin?.()
+  const login = privyHook?.login || onDemoLogin || (() => {})
 
   return (
     <div className="min-h-screen bg-background flex">

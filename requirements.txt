@@ -108,7 +108,6 @@ web3==7.15.0
 flask-cors==6.0.2
 groq==1.1.2
 web3==7.15.0
-git+https://github.com/open-wallet-standard/ows-python.git
 cryptography
 pyJWT
 open-wallet-standard
